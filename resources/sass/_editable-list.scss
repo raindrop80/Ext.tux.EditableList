@@ -1,0 +1,209 @@
+@import '../../global';
+
+/**
+ * @global {measurement} $list-icon-width Default width for list icons.
+ *
+ * @class Ext.tux.EditableList
+ * @xtype editablelist
+ */
+$list-icon-width: 33px;
+
+/**
+ * @global {measurement} $list-icon-height Default height for list icons.
+ *
+ * @class Ext.tux.EditableList
+ * @xtype editablelist
+ */
+$list-icon-height: 33px;
+
+/**
+ * Add a floating icon to the editable-list widget.
+ *
+ * @param {string} $icon-name Name of the icon to include (without extension).
+ * @param {string} $float The floating position of the icon to add.
+ *
+ * @example
+ * .my-element {
+ *   @include editable-list-icon('delete', left) // Add the floating left delete icon.
+ * }
+ *
+ */
+@mixin editable-list-icon($icon-name, $float) {
+	
+	opacity: 1;
+	width: $list-icon-width;
+	height: $list-icon-height;
+	background: theme_image($theme-name, 'tux/editable-list/' + $icon-name + '.png') no-repeat;
+	@include box-flex(0);
+	
+	@if $float == left {
+		margin-right: 10px;
+	} @else if $float == right {
+		margin-left: 10px;
+	}
+}
+
+/**
+ * @class Ext.tux.EditableList
+ * @xtype editablelist
+ */
+@mixin sencha-tux-editablelist {
+	
+	.x-editable-list {
+		
+		@extend .x-list;
+		
+		.x-list-item {
+
+			&.x-dragging {
+				background-color: $list-bg-color;
+				border-bottom: solid 1px #d4d4d4;
+			}
+			
+			.x-list-item-body {
+				
+				@include display-box;
+				
+				.x-icon-delete 		{ @include editable-list-icon('delete', left); 		}
+				.x-icon-deselected  { @include editable-list-icon('deselected', left);  }
+				.x-icon-selected 	{ @include editable-list-icon('selected', left); 	}
+				.x-icon-sort 		{ @include editable-list-icon('sort', right); 		}
+
+				.x-list-content { @include box-flex(1); }
+				
+				.x-button {
+					@include box-flex(0);
+					margin-left: 10px;
+					opacity: 1;
+					width: 100px;
+					
+					&.x-button-hidden {
+					 	width: 0px;
+						opacity: 0;
+						margin-right: -10px;
+						margin-left: -10px;
+					}
+				}
+
+			}
+			
+		}
+		
+		&.x-list-editing {
+			.x-list-item {
+				cursor: pointer;
+			}
+		}
+		
+	}
+	
+	@-webkit-keyframes x-left-icon-slide-in-animation {
+	   0% 	{ 	opacity: 0; 	margin-left: -50px;		}
+	   100% { 	opacity: 1;		margin-left:   0px; 	}
+	}
+
+	@-webkit-keyframes x-right-icon-slide-in-animation {
+	   0% 	{ 	opacity: 0; 	 margin-right: -50px;	}
+	   100% { 	opacity: 1; 	 margin-right:   0px; 	}
+	}
+	
+	@-webkit-keyframes x-left-icon-slide-out-animation {
+	   0% 	{ 	opacity: 1; 	margin-left:   0px;		}
+	   100% { 	opacity: 0;		margin-left:  -50px; 	}
+	}
+
+	@-webkit-keyframes x-right-icon-slide-out-animation {
+	   0% 	{ 	opacity: 1; 	 margin-right: 	 0px;	}
+	   100% { 	opacity: 0; 	 margin-right:   -50px; }
+	}
+	
+	@-webkit-keyframes x-icon-rotate-start-animation {
+		0% 	 { 	-webkit-transform: rotate(0deg);  	}
+		100% { 	-webkit-transform: rotate(-90deg);  }
+	}
+		
+	@-webkit-keyframes x-icon-rotate-end-animation {
+		0% 	 { 	-webkit-transform: rotate(-90deg);  }
+		100% { 	-webkit-transform: rotate(0deg);  	}
+	}
+	
+	@-webkit-keyframes x-button-slide-in-animation {
+		0% 	 { 	opacity: 0;		margin-right: -10px;    width: 0px; 	}
+		100% { 	opacity: 1; 	margin-right: 0px;    	width: 100px;  	}
+	}	
+	
+	@-webkit-keyframes x-button-slide-out-animation {
+		0% 	 { 	opacity: 1;		margin-right: 0px;  	width: 100px; 	}
+		100% { 	opacity: 0; 	margin-right: -10px;	width: 0px;  	}
+	}
+	
+	@-webkit-keyframes x-list-item-deleted-animation {
+	   0% 	{ 	opacity: 1; 	margin-left:   0px;		}
+	   100% { 	opacity: 0;		margin-left:  -150px; 	}
+	}
+	
+	@-webkit-keyframes x-list-item-deleted-black-hole-animation {
+	   0% 	{ 	
+			opacity: 1; 		
+	   }
+	   100% { 	
+		 	opacity: 0;		
+		 	-webkit-transform: rotate(-180deg) scale(0);
+		}
+	}
+	
+	@-webkit-keyframes x-list-item-deleted-explode-animation {
+	   0% 	{ 	
+			opacity: 1; 		
+	   }
+	   100% { 	
+		 	opacity: 0;		
+		 	-webkit-transform: scale(2);
+		}
+	}
+	
+	.x-left-icon-slide-in { -webkit-animation: x-left-icon-slide-in-animation 1.0s 1; }
+	.x-right-icon-slide-in { -webkit-animation: x-right-icon-slide-in-animation 1.0s 1; }
+	
+	.x-left-icon-slide-out { -webkit-animation: x-left-icon-slide-out-animation 1.0s 1; }
+	.x-right-icon-slide-out { -webkit-animation: x-right-icon-slide-out-animation 1.0s 1; }
+	
+	.x-button-slide-in { -webkit-animation: x-button-slide-in-animation 0.5s 1;  }
+	.x-button-slide-out { -webkit-animation: x-button-slide-out-animation 0.5s 1; }
+	
+	.x-icon-rotate-start { 
+		-webkit-animation: x-icon-rotate-start-animation 0.5s 1; 
+		-webkit-animation-fill-mode: forwards;
+	}
+	
+	.x-icon-rotate-end { 
+		-webkit-animation: x-icon-rotate-end-animation 0.5s 1; 
+		-webkit-animation-fill-mode: forwards;
+	}
+	
+	.x-list-item-deleted { 
+		-webkit-animation: x-list-item-deleted-animation 1s 1; 
+		-webkit-animation-fill-mode: forwards;
+	}
+	
+	.x-list-item-deleted-black-hole { 
+		-webkit-animation: x-list-item-deleted-black-hole-animation 1s 1; 
+		-webkit-animation-fill-mode: forwards;
+	}
+	
+	.x-list-item-deleted-explode { 
+		-webkit-animation: x-list-item-deleted-explode-animation 1s 1; 
+		-webkit-animation-fill-mode: forwards;
+	}
+
+	.x-list-left-hidden-icon {
+	 	margin-left: -50px;	
+	}
+	
+	.x-list-right-hidden-icon {
+	 	margin-right: -50px;
+	}
+
+	@include sencha-button-ui('delete', #FF0000, 'glossy');
+	
+}
