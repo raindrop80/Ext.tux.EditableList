@@ -5,7 +5,7 @@ Ext.ns('Ext.tux');
  * @author Andrea Cammarata
  * @link http://www.andreacammarata.com
  * @class Ext.tux.EditableList
- * @version 0.8.4
+ * @version 0.8.5
  * Copyright(c) 2011 SIMACS company of Andrea Cammarata
 */
 Ext.tux.EditableList = Ext.extend(Ext.List, {
@@ -114,7 +114,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 					
 			//Definition of the tpl params
 			params = {
-				tpl: this.itemTpl,
+				tpl: (Ext.isString(this.itemTpl) ? this.itemTpl : this.itemTpl.html),
 				allowSort: this.allowSort,
 				deleteButtonUI: this.deleteButtonUI,
 				deleteButtonText: this.deleteButtonText
@@ -132,7 +132,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 			
 			//Definition of the tpl params
 			params = {
-				tpl: this.itemTpl,
+				tpl: (Ext.isString(this.itemTpl) ? this.itemTpl : this.itemTpl.html),
 				allowSort: this.allowSort
 			};
 			
@@ -148,7 +148,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 		if(Ext.isDefined(this.itemEditTpl)){
 			
 			//Replacing the template html in the params array
-			params.tpl = this.itemEditTpl;
+			params.tpl = (Ext.isString(this.itemEditTpl) ? this.itemEditTpl : this.itemEditTpl.html),
 			
 			//Definition of the innerEditTpl
 			this.innerEditTpl = new Ext.XTemplate(tplHtml);
@@ -166,7 +166,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 		this.itemtap = Ext.util.Functions.createInterceptor(this.itemtap, this.onItemTap, this);
 
 		//Definitions of the CompositeElements which will contains all the icons and button
-		this.deleteIcons = new Ext.CompositeElement();;
+		this.deleteIcons = new Ext.CompositeElement();
 		this.sortIcons = new Ext.CompositeElement();
 		this.deleteButtons = new Ext.CompositeElement();
 		
@@ -175,14 +175,6 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 
 		//Superclass inizialization
 		Ext.tux.EditableList.superclass.initComponent.call(this);
-
-	},
-	
-	/**
-	 * Initis all the component events.
-	 * @private
-	 */
-	initEvents: function(){
 		
 		//Adding the component events
 		this.addEvents(
@@ -211,8 +203,9 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 			'deleteSectionChange'
 			
         );
-		
+
 	},
+	
 	
 	/**
 	 * Reflesh the component.
@@ -435,12 +428,9 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	 */
 	switchState: function(edit){
 
-		/* Calling the reflesh function if the edit Template
-		 * is defined because the list have to overwrite the elements content */
-		//if(Ext.isDefined(this.itemEditTpl)){
-			this.refresh();
-		//}
-		
+		//Calling the list reflesh function
+		this.refresh();
+
 		//Check if requested the edit state
 		if(edit){
 			
@@ -456,9 +446,13 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	
 		//Calling the function able to set the css classes to the left docked icons
 		this.setIconCls(this.deleteIcons, 'left', edit);
-		
-		//Calling the function able to set the css classes to the right docked icons
-		this.setIconCls(this.sortIcons, 'right', edit);
+
+		//Checking if the list allow the elements sorting
+		if(this.allowSort){
+
+			//Calling the function able to set the css classes to the right docked icons
+			this.setIconCls(this.sortIcons, 'right', edit);
+		}
 		
 	},
 	
@@ -696,6 +690,9 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 				this.fireEvent('deleteSectionChange', this, this.deleteSectionCount);
 			
 			}
+			
+			//Don't fire the itemtap event
+			return false;
 
 		}
 
@@ -735,8 +732,12 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 		
 			});
 	
-			//Resetting the sort icon
-			this.setIconCls(sortIcon, 'right', true);
+			//Check if the list supports elements sorting
+			if(this.allowSort){
+				
+				//Resetting the sort icon
+				this.setIconCls(sortIcon, 'right', true);
+			}
 	
 			//Adding the hidden icon class
 			deleteBtn.addCls('x-button-slide-out');
