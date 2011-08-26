@@ -57,12 +57,7 @@ Ext.regApplication('EditableListSample.', {
 				itemId: 'lstContacts',
 				itemTpl: '{firstName} {lastName}',
 			    store: 'Contacts',
-				multiDelete: false,
-				listeners: {
-					itemtap: function(list, index, item, e){
-						alert('c');
-					}
-				}
+				multiDelete: false
 			}]
         });
 		
