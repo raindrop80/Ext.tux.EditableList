@@ -5,7 +5,7 @@ Ext.ns('Ext.tux');
  * @author Andrea Cammarata
  * @link http://www.andreacammarata.com
  * @class Ext.tux.EditableList
- * @version 0.8.5
+ * @version 0.8.6
  * Copyright(c) 2011 SIMACS company of Andrea Cammarata
 */
 Ext.tux.EditableList = Ext.extend(Ext.List, {
@@ -68,13 +68,10 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	multiDelete: false,
 	
 	//@private
-	isEditing: false,
+	editing: false,
 	
 	//@private
-	isDeleting: false,
-	
-	//@private
-	isSorting: false,
+	deleting: false,
 	
 	//@private
 	deleteSectionCount: 0,
@@ -82,7 +79,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	initComponent: function(){
 		
 		//Adding a component beta warning message
-		console.warn('Ext.tux.EditableList: This component is still in beta version so if you find any bug, please report it writing at the component official Sencha Forum Thread at the url: ' +
+		console.info('Ext.tux.EditableList: This component is still in beta version so if you find any bug, please report it writing at the component official Sencha Forum Thread at the url: ' +
 			 		 'http://www.sencha.com/forum/showthread.php?144737-Ext.tux.EditableList-Improved-list-component.');
 		
 		//At the moment the groped property is not supported by the component
@@ -180,30 +177,63 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 		this.addEvents(
 
 			/**
-			 * @event beforeEditCompleted
+			 * @event 
 			 * Fires just before the list switch his state to Editing.
              * @param {Ext.tux.EditableList} this The EditableList object.
 			 */
-			'beforeEditCompleted',
+			'beforeeditcompleted',
 
 			/**
-			 * @event editCompleted
+			 * @event editcompleted
 			 * Fires after the list switch his state back from Editing to Normal.
              * @param {Ext.tux.EditableList} this The EditableList object.
 			 */
-            'editCompleted',
+            'editcompleted',
 
 			/**
-			 * @event deleteSectionChange
+			 * @event deletesectionchange
 			 * Fires after the number of the elements marked as to delete change.
 			 * <b>This event fires only if {@link #multiDelete} is set to True.</b>
              * @param {Ext.tux.EditableList} this The EditableList object.
 			 * @param {Number} tot The total number of the elements marked as to delete.
 			 */
-			'deleteSectionChange'
+			'deletesectionchange',
+			
+			/**
+			 * @event sortchange
+			 * Fires after a list element is moved to a new position.
+			 * <b>This event fires only if {@link #multiDelete} is set to True.</b>
+             * @param {Ext.tux.EditableList} this The EditableList object.
+			 * @param {Ext.data.Model} record The record linked to the sorted list element.
+			 * @param {Ext.Element} el The list element sorted.
+			 * @param {Number} oldIndex The old list element index.
+			 * @param {Number} newIndex The new list element index.
+			 */
+			'sortchange',
+
+			/**
+			 * @event itemdeleted
+			 * Fires after a list element is removed.
+             * @param {Ext.tux.EditableList} this The EditableList object.
+			 * @param {Ext.data.Model} record The record deleted.
+			 * @param {Ext.Element} el The element linked to the deleted record.
+			 */
+			'itemdeleted'
 			
         );
 
+	},
+	
+	afterRender: function(){
+	
+		//Superclass inizialization
+		Ext.tux.EditableList.superclass.afterRender.call(this);
+		
+		this.mon(this.scroller, {
+			scrollend: this.onScrollEnd, 
+			scope: this
+		});
+		
 	},
 	
 	
@@ -238,7 +268,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 			
 	    } else {
 	
-			if(this.isEditing){
+			if(this.editing){
 	        	if(Ext.isDefined(this.itemEditTpl)){
 					d = this.editTpl;
 				}
@@ -270,7 +300,14 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	    }
 	    this.hasSkippedEmptyText = true;
 	    this.fireEvent("refresh", this);
+	
+	
 		
+		
+		this.region = new Ext.util.Region.getRegion(this.el);
+		
+		
+
 	},
 	
 	/**
@@ -279,7 +316,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	 */
 	updateIconsCls: function(){
 
-		if(!this.isEditing){
+		if(!this.editing){
 			
 			this.deleteIcons.addCls('x-list-left-hidden-icon');
 			
@@ -301,6 +338,23 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 
 	},
 	
+	onScrollEnd: function(s, o){
+
+	        var region = Ext.util.Region.getRegion(this.el);
+	        this.all.each(function(item){
+	            if(region.intersect(Ext.util.Region.getRegion(item))){
+	                if(!item.hasCls('x-animated')) {
+	                    item.addCls('x-animated');
+	                }
+	            }else{
+	                if(item.hasCls('x-animated')) {
+	                    item.removeCls('x-animated');
+	                }
+	            }
+	        });
+
+	    },
+	
 	/**
 	 * Called whe the element sorting starts.
 	 * @private.
@@ -312,7 +366,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	
 		/* Calling the function that will bring the list out 
 		 * from the deleting mode */
-		if(!this.multiDelete && this.isDeleting){
+		if(!this.multiDelete && this.deleting){
 			this.exitDeleteMode();
 		}
 
@@ -324,13 +378,13 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	edit: function(){
 		
 		//Check if the list is already in editing mode
-		if(!this.isEditing){
+		if(!this.editing){
 		
 			//Setting the list in editing mode
-			this.isEditing = true;
+			this.editing = true;
 		
 			//Calling the function able to change the list state
-			this.switchState(this.isEditing);
+			this.switchState(this.editing);
 		}
 		
 	},
@@ -341,26 +395,51 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	editCompleted: function(){
 	
 		//Check if the list is already in editing mode
-		if(this.isEditing){
+		if(this.editing){
 			
-			//Firing the "beforeEditCompleted" event
-			this.fireEvent('beforeEditCompleted', this);
+			//Firing the "beforeeditcompleted" event
+			this.fireEvent('beforeeditcompleted', this);
 
 			//Setting the list in normal mode
-			this.isEditing = false;
+			this.editing = false;
 			
 			//Calling the function able to change the list state
-			this.switchState(this.isEditing);
+			this.switchState(this.editing);
 
-			//Firing the "editCompleted" event
-			this.fireEvent('editCompleted', this);
+			//Firing the "editcompleted" event
+			this.fireEvent('editcompleted', this);
 
 		}
 		
 	},
 	
 	/**
+	 * True if the list is in edit state.
+	 * @return {Boolean} True if the list is in edit mode.
+	 */
+	isEditing: function(){
+		return this.editing;
+	},
+	
+	/**
+	 * True if the list is in delete state.
+	 * @return {Boolean} True if the list is in delete mode.
+	 */
+	isDeleting: function(){
+		return this.deleting;
+	},
+	
+	/**
+	 * True if the user is currently sorting the elements.
+	 * @return {Boolean} True if the user is currently sorting the elements.
+	 */
+	isSorting: function(){
+		return this.sortable.isSorting();
+	},
+	
+	/**
 	 * Get the configured delete animation Cls.
+	 * @return {String} The delete animation Cls.
 	 */
 	getDeleteAnimationCls: function(){
 		return this.deleteAnimationCls;
@@ -389,12 +468,6 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
             constrain: true,
 			disabled: true,
 			listeners: {
-				sortstart: function(){
-				
-					//The user is sorting the list elements
-					this.isSorting = true;
-					
-				},
 				sortend: function(sortable, el, e, oldIndex, newIndex){
 					
 					//Getting the record associated to the sorted element
@@ -411,8 +484,8 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 					 * on the sort icon. */
 					sortable.disable();
 					
-					//The user is no longer sorting the list elements
-					this.isSorting = false;
+					//Firing the sortchange event
+					this.fireEvent('sortchange', this, record, el, oldIndex, newIndex);
 					
 				},
 				scope: this
@@ -537,8 +610,8 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 			//Clearing the total number of selected items
 			this.deleteSectionCount = 0;
 			
-			//Firing the "deleteSectionChange" event
-			this.fireEvent('deleteSectionChange', this, this.deleteSectionCount);
+			//Firing the "deletesectionchange" event
+			this.fireEvent('deletesectionchange', this, this.deleteSectionCount);
 			
 		}
 		
@@ -555,7 +628,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	onItemTap: function(list, index, item, e){
 		
 		//Checking if the list is in editing state
-		if(this.isEditing){
+		if(this.editing){
 		
 			//Getting the tapped element
 			var el = Ext.get(item.target);
@@ -625,7 +698,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 						this.tappedEl = listItem;
 			
 						//Setting the list in deleting state
-						this.isDeleting = true;
+						this.deleting = true;
 
 						break;
 				
@@ -686,8 +759,8 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 				
 				}
 
-				//Firing the "deleteSectionChange" event
-				this.fireEvent('deleteSectionChange', this, this.deleteSectionCount);
+				//Firing the "deletesectionchange" event
+				this.fireEvent('deletesectionchange', this, this.deleteSectionCount);
 			
 			}
 			
@@ -705,7 +778,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 	exitDeleteMode: function(){
 	
 		//Check if the list is in delete state
-		if(this.isDeleting){
+		if(this.deleting){
 
 			//Getting the list item element
 			var listItem = this.tappedEl;
@@ -753,7 +826,7 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 			});
 	
 			//Removing the deleting state from the list
-			this.isDeleting = false;
+			this.deleting = false;
 			
 		}
 		
@@ -804,6 +877,9 @@ Ext.tux.EditableList = Ext.extend(Ext.List, {
 
 				//Removing the selected item from the store
 				this.store.remove(record);
+				
+				//Firing the itemdeleted event
+				this.fireEvent('itemdeleted', this, record, el);
 			
 			}
 	

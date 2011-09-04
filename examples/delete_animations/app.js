@@ -109,7 +109,7 @@ Ext.regApplication('EditableListSample.', {
 			    store: 'Contacts',
 				multiDelete: true,
 				listeners: {
-					deleteSectionChange: function(list, tot){
+					deletesectionchange: function(list, tot){
 						
 						//Getting the Delete button
 						var btnDelete = this.viewport.getDockedComponent('btmToolbar').getComponent('btnDelete');

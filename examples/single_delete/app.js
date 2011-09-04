@@ -57,7 +57,8 @@ Ext.regApplication('EditableListSample.', {
 				itemId: 'lstContacts',
 				itemTpl: '{firstName} {lastName}',
 			    store: 'Contacts',
-				multiDelete: false
+				multiDelete: false,
+				allowSort: true
 			}]
         });
 		
